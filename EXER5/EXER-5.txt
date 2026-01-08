@@ -1,0 +1,339 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.Random;
+
+public class test {
+    private JFrame frame;
+    private JTextField usernameField;
+    private String username;
+
+    public test() {
+        showUsernameInput();
+    }
+
+    // Step 1: Ask for username
+    private void showUsernameInput() {
+        frame = new JFrame("Enter Username");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(350, 150);
+        frame.setLayout(new FlowLayout());
+
+        JLabel label = new JLabel("Enter your username:");
+        usernameField = new JTextField(15);
+        JButton enterButton = new JButton("Enter");
+
+        ActionListener submitAction = e -> {
+            username = usernameField.getText().trim();
+            if (!username.isEmpty()) {
+                frame.dispose();
+                confirmUsername();
+            } else {
+                JOptionPane.showMessageDialog(frame, "Please enter a username!");
+            }
+        };
+
+        enterButton.addActionListener(submitAction);
+        usernameField.addActionListener(submitAction);
+
+        frame.add(label);
+        frame.add(usernameField);
+        frame.add(enterButton);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+    }
+
+    // Step 2: Confirm username
+    private void confirmUsername() {
+        frame = new JFrame("Confirm Username");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(350, 150);
+        frame.setLayout(new FlowLayout());
+
+        JLabel label = new JLabel("Is your username: " + username + "?");
+        JButton yesButton = new JButton("Yes");
+        JButton noButton = new JButton("No");
+
+        yesButton.addActionListener(e -> {
+            frame.dispose();
+            nextProgram();
+        });
+
+        noButton.addActionListener(e -> {
+            frame.dispose();
+            showUsernameInput();
+        });
+
+        frame.add(label);
+        frame.add(yesButton);
+        frame.add(noButton);
+
+        frame.getRootPane().setDefaultButton(yesButton);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+    }
+
+    // Step 3: Arithmetic Game GUI
+    private void nextProgram() {
+        frame = new JFrame("Arithmetic Game");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(600, 800);
+        frame.setLayout(new BorderLayout(10, 10));
+
+        // Greeting label
+        JLabel greetingLabel = new JLabel("Hello, " + username + "!");
+        greetingLabel.setFont(new Font("Arial", Font.BOLD, 26));
+        greetingLabel.setHorizontalAlignment(SwingConstants.LEFT);
+        greetingLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 10));
+        frame.add(greetingLabel, BorderLayout.NORTH);
+
+        Random rand = new Random();
+        final int[] num1 = {0};
+        final int[] num2 = {0};
+        final char[] operation = {'+'};
+        final int[] level = {1};
+
+        final JButton[] selectedOperationBtn = {null};
+        final JButton[] selectedLevelBtn = {null};
+
+        // Scoreboard counters
+        final int[] attempts = {0};
+        final int[] corrects = {0};
+        final int[] incorrects = {0};
+
+        // Main center panel
+        JPanel centerPanel = new JPanel();
+        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
+        centerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // Guide text aligned left
+        JLabel guideLabel = new JLabel("Guide: Enter Integer Number on the box after the equal sign.");
+        guideLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        JPanel guidePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        guidePanel.add(guideLabel);
+        centerPanel.add(guidePanel);
+        centerPanel.add(Box.createVerticalStrut(20));
+
+        // Question panel
+        JPanel questionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        JLabel questionLabel = new JLabel();
+        questionLabel.setFont(new Font("Consolas", Font.BOLD, 22));
+
+        JTextField answerField = new JTextField(5);
+        JButton enterButton = new JButton("Enter");
+        JLabel resultLabel = new JLabel(" ");
+        resultLabel.setFont(new Font("Arial", Font.BOLD, 16));
+
+        // Scoreboard labels
+        JLabel attemptsLabel = new JLabel("Attempts: 0");
+        JLabel correctsLabel = new JLabel("Corrects: 0");
+        JLabel incorrectsLabel = new JLabel("Incorrects: 0");
+        attemptsLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        correctsLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        incorrectsLabel.setFont(new Font("Arial", Font.BOLD, 14));
+
+        // Generate new question
+        Runnable generateQuestion = () -> {
+            int min = switch (level[0]) {
+                case 1 -> 1;
+                case 2 -> 101;
+                case 3 -> 501;
+                default -> 1;
+            };
+            int max = switch (level[0]) {
+                case 1 -> 100;
+                case 2 -> 500;
+                case 3 -> 1000;
+                default -> 100;
+            };
+
+            while (true) {
+                num1[0] = rand.nextInt(max - min + 1) + min;
+                num2[0] = rand.nextInt(max - min + 1) + min;
+                if (num2[0] == 0) continue;
+                if (operation[0] == '/') {
+                    if (num1[0] % num2[0] != 0) continue;
+                    if (num1[0] < num2[0]) continue;
+                } else if (operation[0] == '%') {
+                    if (num1[0] < num2[0]) continue;
+                }
+                break;
+            }
+
+            questionLabel.setText("   " + num1[0] + " " + operation[0] + " " + num2[0]);
+            answerField.setText("");
+            resultLabel.setText(" ");
+
+            // Unlock enter button after new question
+            enterButton.setEnabled(true);
+            answerField.setEditable(true);
+        };
+
+        // Check answer
+        ActionListener checkAnswer = e -> {
+            if (!enterButton.isEnabled()) return; // prevent spam
+
+            String input = answerField.getText().trim();
+            if (input.isEmpty()) {
+                JOptionPane.showMessageDialog(frame, "Please enter an answer!");
+                return;
+            }
+
+            try {
+                int userAnswer = Integer.parseInt(input);
+                int correctAnswer = switch (operation[0]) {
+                    case '+' -> num1[0] + num2[0];
+                    case '-' -> num1[0] - num2[0];
+                    case 'x' -> num1[0] * num2[0];
+                    case '/' -> num1[0] / num2[0];
+                    case '%' -> num1[0] % num2[0];
+                    default -> 0;
+                };
+
+                attempts[0]++;
+                if (userAnswer == correctAnswer) {
+                    corrects[0]++;
+                    resultLabel.setForeground(Color.GREEN);
+                    resultLabel.setText("Correct!");
+                } else {
+                    incorrects[0]++;
+                    resultLabel.setForeground(Color.RED);
+                    resultLabel.setText("Incorrect! Correct answer: " + correctAnswer);
+                }
+
+                // Update scoreboard
+                attemptsLabel.setText("Attempts: " + attempts[0]);
+                correctsLabel.setText("Corrects: " + corrects[0]);
+                incorrectsLabel.setText("Incorrects: " + incorrects[0]);
+
+                // Disable enter until new question
+                enterButton.setEnabled(false);
+                answerField.setEditable(false);
+
+                Timer timer = new Timer(1500, ev -> generateQuestion.run());
+                timer.setRepeats(false);
+                timer.start();
+
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(frame, "Please enter a valid integer!");
+            }
+        };
+
+        enterButton.addActionListener(checkAnswer);
+        answerField.addActionListener(checkAnswer);
+
+        questionPanel.add(questionLabel);
+        questionPanel.add(new JLabel("="));
+        questionPanel.add(answerField);
+        questionPanel.add(enterButton);
+        centerPanel.add(questionPanel);
+
+        // Operation buttons
+        JPanel operationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        operationPanel.add(new JLabel("Operations:"));
+        for (char op : new char[]{'+', '-', 'x', '/', '%'}) {
+            JButton opBtn = new JButton(String.valueOf(op));
+            opBtn.addActionListener(e -> {
+                operation[0] = op;
+                generateQuestion.run();
+
+                // Highlight selected operation
+                if (selectedOperationBtn[0] != null)
+                    selectedOperationBtn[0].setBackground(null);
+                opBtn.setBackground(Color.YELLOW);
+                selectedOperationBtn[0] = opBtn;
+            });
+            operationPanel.add(opBtn);
+
+            if (op == '+') { // default highlighted
+                opBtn.setBackground(Color.YELLOW);
+                selectedOperationBtn[0] = opBtn;
+            }
+        }
+        centerPanel.add(operationPanel);
+
+        // Level buttons
+        JPanel levelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        levelPanel.add(new JLabel("Levels:"));
+        for (int i = 1; i <= 3; i++) {
+            JButton lvlBtn = new JButton("Level " + i);
+            int lvlIndex = i;
+            lvlBtn.addActionListener(e -> {
+                level[0] = lvlIndex;
+                generateQuestion.run();
+
+                // Highlight selected level
+                if (selectedLevelBtn[0] != null)
+                    selectedLevelBtn[0].setBackground(null);
+                lvlBtn.setBackground(Color.CYAN);
+                selectedLevelBtn[0] = lvlBtn;
+            });
+            levelPanel.add(lvlBtn);
+
+            if (i == 1) { // default highlighted
+                lvlBtn.setBackground(Color.CYAN);
+                selectedLevelBtn[0] = lvlBtn;
+            }
+        }
+        centerPanel.add(levelPanel);
+
+        // Scoreboard & buttons below levels
+        centerPanel.add(Box.createVerticalStrut(20));
+
+        JPanel scoreBoardPanel = new JPanel();
+        scoreBoardPanel.setLayout(new BoxLayout(scoreBoardPanel, BoxLayout.Y_AXIS));
+        scoreBoardPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        attemptsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        scoreBoardPanel.add(attemptsLabel);
+
+        JPanel rowPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 0));
+        rowPanel.add(correctsLabel);
+        rowPanel.add(incorrectsLabel);
+        scoreBoardPanel.add(rowPanel);
+
+        JPanel buttonsRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+
+        JButton restartButton = new JButton("Restart");
+        restartButton.setFont(new Font("Arial", Font.BOLD, 14));
+        restartButton.addActionListener(e -> {
+            attempts[0] = 0;
+            corrects[0] = 0;
+            incorrects[0] = 0;
+            attemptsLabel.setText("Attempts: 0");
+            correctsLabel.setText("Corrects: 0");
+            incorrectsLabel.setText("Incorrects: 0");
+            generateQuestion.run();
+        });
+
+        JButton changeNameButton = new JButton("Change Name");
+        changeNameButton.setFont(new Font("Arial", Font.BOLD, 14));
+        changeNameButton.addActionListener(e -> {
+            frame.dispose();
+            showUsernameInput();
+        });
+
+        buttonsRow.add(restartButton);
+        buttonsRow.add(changeNameButton);
+        scoreBoardPanel.add(Box.createVerticalStrut(10));
+        scoreBoardPanel.add(buttonsRow);
+
+        centerPanel.add(scoreBoardPanel);
+        centerPanel.add(Box.createVerticalStrut(20));
+
+        // Result panel
+        JPanel resultPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        resultPanel.add(resultLabel);
+        centerPanel.add(resultPanel);
+
+        frame.add(centerPanel, BorderLayout.CENTER);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+
+        generateQuestion.run();
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(test::new);
+    }
+}
